@@ -15,3 +15,6 @@ setuptools.egg-info
 *~
 .hg*
 .cache
+.project
+.pydevproject
+
