@@ -11,7 +11,8 @@ import pytest
 from pkg_resources.extern import packaging
 
 import pkg_resources
-from pkg_resources import (parse_requirements, VersionConflict, parse_version,
+from pkg_resources import (
+    parse_requirements, VersionConflict, parse_version,
     Distribution, EntryPoint, Requirement, safe_version, safe_name,
     WorkingSet)
 
@@ -51,7 +52,8 @@ class TestDistro:
         assert list(ad) == ['foopkg']
 
         # Distributions sort by version
-        assert [dist.version for dist in ad['FooPkg']] == ['1.4', '1.3-1', '1.2']
+        expected = ['1.4', '1.3-1', '1.2']
+        assert [dist.version for dist in ad['FooPkg']] == expected
 
         # Removing a distribution leaves sequence alone
         ad.remove(ad['FooPkg'][1])
@@ -97,7 +99,10 @@ class TestDistro:
     def testDistroBasics(self):
         d = Distribution(
             "/some/path",
-            project_name="FooPkg", version="1.3-1", py_version="2.4", platform="win32"
+            project_name="FooPkg",
+            version="1.3-1",
+            py_version="2.4",
+            platform="win32",
         )
         self.checkFooPkg(d)
 
@@ -113,10 +118,11 @@ class TestDistro:
 
     def testDistroMetadata(self):
         d = Distribution(
-            "/some/path", project_name="FooPkg", py_version="2.4", platform="win32",
+            "/some/path", project_name="FooPkg",
+            py_version="2.4", platform="win32",
             metadata=Metadata(
                 ('PKG-INFO', "Metadata-Version: 1.0\nVersion: 1.3-1\n")
-            )
+            ),
         )
         self.checkFooPkg(d)
 
@@ -164,7 +170,10 @@ class TestDistro:
         ad.add(Baz)
 
         # Activation list now includes resolved dependency
-        assert list(ws.resolve(parse_requirements("Foo[bar]"), ad)) == [Foo, Baz]
+        assert (
+            list(ws.resolve(parse_requirements("Foo[bar]"), ad))
+            == [Foo, Baz]
+        )
         # Requests for conflicting versions produce VersionConflict
         with pytest.raises(VersionConflict) as vc:
             ws.resolve(parse_requirements("Foo==1.2\nFoo!=1.2"), ad)
@@ -206,12 +215,10 @@ class TestDistro:
         """Extras are also evaluated as markers at resolution time."""
         ad = pkg_resources.Environment([])
         ws = WorkingSet([])
-        # Metadata needs to be native strings due to cStringIO behaviour in
-        # 2.6, so use str().
         Foo = Distribution.from_filename(
             "/foo_dir/Foo-1.2.dist-info",
-            metadata=Metadata(("METADATA", str("Provides-Extra: baz\n"
-                               "Requires-Dist: quux; extra=='baz'")))
+            metadata=Metadata(("METADATA", "Provides-Extra: baz\n"
+                               "Requires-Dist: quux; extra=='baz'"))
         )
         ad.add(Foo)
         assert list(ws.resolve(parse_requirements("Foo"), ad)) == [Foo]
@@ -224,12 +231,10 @@ class TestDistro:
         """Extras are also evaluated as markers at resolution time."""
         ad = pkg_resources.Environment([])
         ws = WorkingSet([])
-        # Metadata needs to be native strings due to cStringIO behaviour in
-        # 2.6, so use str().
         Foo = Distribution.from_filename(
             "/foo_dir/Foo-1.2.dist-info",
-            metadata=Metadata(("METADATA", str("Provides-Extra: baz-lightyear\n"
-                               "Requires-Dist: quux; extra=='baz-lightyear'")))
+            metadata=Metadata(("METADATA", "Provides-Extra: baz-lightyear\n"
+                               "Requires-Dist: quux; extra=='baz-lightyear'"))
         )
         ad.add(Foo)
         assert list(ws.resolve(parse_requirements("Foo"), ad)) == [Foo]
@@ -241,14 +246,12 @@ class TestDistro:
     def test_marker_evaluation_with_multiple_extras(self):
         ad = pkg_resources.Environment([])
         ws = WorkingSet([])
-        # Metadata needs to be native strings due to cStringIO behaviour in
-        # 2.6, so use str().
         Foo = Distribution.from_filename(
             "/foo_dir/Foo-1.2.dist-info",
-            metadata=Metadata(("METADATA", str("Provides-Extra: baz\n"
+            metadata=Metadata(("METADATA", "Provides-Extra: baz\n"
                                "Requires-Dist: quux; extra=='baz'\n"
                                "Provides-Extra: bar\n"
-                               "Requires-Dist: fred; extra=='bar'\n")))
+                               "Requires-Dist: fred; extra=='bar'\n"))
         )
         ad.add(Foo)
         quux = Distribution.from_filename("/foo_dir/quux-1.0.dist-info")
@@ -261,22 +264,20 @@ class TestDistro:
     def test_marker_evaluation_with_extras_loop(self):
         ad = pkg_resources.Environment([])
         ws = WorkingSet([])
-        # Metadata needs to be native strings due to cStringIO behaviour in
-        # 2.6, so use str().
         a = Distribution.from_filename(
             "/foo_dir/a-0.2.dist-info",
-            metadata=Metadata(("METADATA", str("Requires-Dist: c[a]")))
+            metadata=Metadata(("METADATA", "Requires-Dist: c[a]"))
         )
         b = Distribution.from_filename(
             "/foo_dir/b-0.3.dist-info",
-            metadata=Metadata(("METADATA", str("Requires-Dist: c[b]")))
+            metadata=Metadata(("METADATA", "Requires-Dist: c[b]"))
         )
         c = Distribution.from_filename(
             "/foo_dir/c-1.0.dist-info",
-            metadata=Metadata(("METADATA", str("Provides-Extra: a\n"
+            metadata=Metadata(("METADATA", "Provides-Extra: a\n"
                                "Requires-Dist: b;extra=='a'\n"
                                "Provides-Extra: b\n"
-                               "Requires-Dist: foo;extra=='b'")))
+                               "Requires-Dist: foo;extra=='b'"))
         )
         foo = Distribution.from_filename("/foo_dir/foo-0.1.dist-info")
         for dist in (a, b, c, foo):
@@ -423,7 +424,8 @@ class TestEntryPoints:
 
     submap_expect = dict(
         feature1=EntryPoint('feature1', 'somemodule', ['somefunction']),
-        feature2=EntryPoint('feature2', 'another.module', ['SomeClass'], ['extra1', 'extra2']),
+        feature2=EntryPoint(
+            'feature2', 'another.module', ['SomeClass'], ['extra1', 'extra2']),
         feature3=EntryPoint('feature3', 'this.module', extras=['something'])
     )
     submap_str = """
@@ -526,11 +528,17 @@ class TestRequirements:
             Requirement.parse('setuptools').project_name == 'setuptools')
         # setuptools 0.7 and higher means setuptools.
         assert (
-            Requirement.parse('setuptools == 0.7').project_name == 'setuptools')
+            Requirement.parse('setuptools == 0.7').project_name
+            == 'setuptools'
+        )
         assert (
-            Requirement.parse('setuptools == 0.7a1').project_name == 'setuptools')
+            Requirement.parse('setuptools == 0.7a1').project_name
+            == 'setuptools'
+        )
         assert (
-            Requirement.parse('setuptools >= 0.7').project_name == 'setuptools')
+            Requirement.parse('setuptools >= 0.7').project_name
+            == 'setuptools'
+        )
 
 
 class TestParsing:
@@ -560,7 +568,7 @@ class TestParsing:
                     """
         assert (
             list(pkg_resources.split_sections(sample))
-                ==
+            ==
             [
                 (None, ["x"]),
                 ("Y", ["z", "a"]),
@@ -846,7 +854,8 @@ class TestNamespaces:
             subpkg = nspkg / 'subpkg'
             subpkg.ensure_dir()
             (nspkg / '__init__.py').write_text(self.ns_str, encoding='utf-8')
-            (subpkg / '__init__.py').write_text(vers_str % number, encoding='utf-8')
+            (subpkg / '__init__.py').write_text(
+                vers_str % number, encoding='utf-8')
 
         import nspkg.subpkg
         import nspkg
